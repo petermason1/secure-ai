@@ -1,65 +1,164 @@
-import Image from "next/image";
+import Link from "next/link";
+
+import IdeaStudio from "./components/IdeaStudio";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(14,165,233,0.16),_transparent_60%)]" />
+      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-lg font-bold text-emerald-950">
+              IR
+            </span>
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">Idea Randomizer</p>
+              <h1 className="text-xl font-semibold text-white">Your AI concept co-pilot</h1>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <Link
+              href="#how-it-works"
+              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              How it works
+            </Link>
+            <Link
+              href="#faq"
+              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
             >
-              Learning
-            </a>{" "}
-            center.
+              FAQ
+            </Link>
+            <a
+              href="https://github.com/petermason1/idea-gen"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold text-slate-900 shadow hover:bg-slate-100"
+            >
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="px-6 pb-24 pt-12 lg:px-8">
+        <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 text-center">
+          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-emerald-200">
+            Build faster
+          </span>
+          <h2 className="text-4xl font-semibold leading-tight text-white sm:text-5xl">
+            Spin up thoughtful startup concepts in minutes, not hours.
+          </h2>
+          <p className="max-w-2xl text-lg text-slate-300">
+            Blend curated prompts with smart randomization to explore new markets, surface
+            differentiators, and create MVP-ready narratives backed by AI.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const element = document.getElementById("workspace");
+                element?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300"
+            >
+              Launch the studio
+            </button>
+            <Link
+              href="#faq"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+            >
+              Learn more
+            </Link>
+          </div>
+        </section>
+
+        <section id="workspace" className="mt-14">
+          <IdeaStudio />
+        </section>
+
+        <section
+          id="how-it-works"
+          className="mx-auto mt-20 grid w-full max-w-5xl gap-6 rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-2xl shadow-slate-950/30 md:grid-cols-3"
+        >
+          {[
+            {
+              title: "Curated prompt DNA",
+              description:
+                "Pick from tuned themes, audiences, problems, and twists inspired by real product playbooks. Blend them into a unique creative brief in seconds.",
+            },
+            {
+              title: "Actionable idea decks",
+              description:
+                "Each generated concept includes a headline, pitch, and talking points you can drop straight into decks, docs, or client conversations.",
+            },
+            {
+              title: "Save & remix",
+              description:
+                "Keep a local backlog of favourites, copy pitches to share instantly, and reroll with new angles whenever inspiration strikes.",
+            },
+          ].map((item) => (
+            <article
+              key={item.title}
+              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-800/40 p-5"
+            >
+              <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+              <p className="text-sm text-slate-300">{item.description}</p>
+            </article>
+          ))}
+        </section>
+
+        <section
+          id="faq"
+          className="mx-auto mt-20 w-full max-w-4xl rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-xl shadow-slate-950/30"
+        >
+          <h3 className="text-2xl font-semibold text-white">Frequently asked</h3>
+          <div className="mt-6 space-y-6">
+            <article>
+              <h4 className="text-lg font-semibold text-emerald-200">
+                Can I export or share these ideas?
+              </h4>
+              <p className="mt-2 text-sm text-slate-300">
+                Yes—each idea comes with a ready-to-copy pitch summary. We plan to add PDF export and
+                share links as part of the next milestone.
+              </p>
+            </article>
+            <article>
+              <h4 className="text-lg font-semibold text-emerald-200">
+                Will the randomizer learn my preferences?
+              </h4>
+              <p className="mt-2 text-sm text-slate-300">
+                Today it keeps everything local for speed. Once accounts land, it will refine
+                suggestions using your saved history and industry focus.
+              </p>
+            </article>
+            <article>
+              <h4 className="text-lg font-semibold text-emerald-200">
+                What&apos;s coming next?
+              </h4>
+              <p className="mt-2 text-sm text-slate-300">
+                Up next: trend-aware prompt packs, market validation checklists, and collaborative
+                workspaces. Follow the repo to watch features drop in.
+              </p>
+            </article>
+          </div>
+        </section>
       </main>
+
+      <footer className="border-t border-white/10 bg-slate-950/80">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-sm text-slate-400 lg:px-8">
+          <p>
+            © {new Date().getFullYear()} Idea Randomizer. Crafted for founders and product teams.
+          </p>
+          <a
+            href="mailto:hello@idearandomizer.app"
+            className="text-emerald-200 transition hover:text-emerald-300"
+          >
+            hello@idearandomizer.app
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
