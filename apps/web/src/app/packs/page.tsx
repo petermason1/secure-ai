@@ -33,7 +33,7 @@ export default function PacksPage() {
   const packs = getPromptPacks();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="relative min-h-screen bg-slate-950 text-slate-100">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(14,165,233,0.16),_transparent_60%)]" />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-24 pt-16 lg:px-12">
         <section className="flex flex-col gap-6">

@@ -634,7 +634,7 @@ export default function IdeaStudio() {
         )}
       </div>
 
-      <aside className="flex flex-col gap-4">
+      <aside className="flex flex-col gap-4 lg:self-start">
         <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20">
           <header className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-200">
