@@ -25,6 +25,18 @@ export default function Home() {
               How it works
             </Link>
             <Link
+              href="/learn"
+              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+            >
+              Learn AI
+            </Link>
+            <Link
+              href="/packs"
+              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+            >
+              Prompt packs
+            </Link>
+            <Link
               href="#faq"
               className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
             >
@@ -48,28 +60,31 @@ export default function Home() {
             Build faster
           </span>
           <h2 className="text-4xl font-semibold leading-tight text-white sm:text-5xl">
-            Spin up thoughtful startup concepts in minutes, not hours.
+            Spin up thoughtful startup concepts and learn AI along the way.
           </h2>
           <p className="max-w-2xl text-lg text-slate-300">
             Blend curated prompts with smart randomization to explore new markets, surface
-            differentiators, and create MVP-ready narratives backed by AI.
+            differentiators, and create MVP-ready narratives. Each step explains the AI thinking so
+            founders and teams build confidence, not just ideas.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                const element = document.getElementById("workspace");
-                element?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
+            <Link
+              href="#workspace"
               className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300"
             >
               Launch the studio
-            </button>
+            </Link>
             <Link
               href="#faq"
               className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
             >
               Learn more
+            </Link>
+            <Link
+              href="/learn"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-6 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/80 hover:text-white"
+            >
+              Explore AI lessons
             </Link>
           </div>
         </section>

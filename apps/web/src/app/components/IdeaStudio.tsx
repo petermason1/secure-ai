@@ -6,16 +6,19 @@ import type {
   GenerateIdeaOptions,
   Idea,
   PromptCategory,
+  PromptPack,
   PromptTaxonomy,
 } from '@idea-randomizer/core';
 
 type GenerateResponse = {
   ideas: Idea[];
   taxonomy?: PromptTaxonomy;
+  packs?: PromptPack[];
   meta: {
     generatedAt: string;
     count: number;
     filtersApplied: Partial<GenerateIdeaOptions>;
+    seeds: string[];
   };
 };
 
@@ -28,8 +31,10 @@ type IdeaEntry = {
 const HISTORY_STORAGE_KEY = 'idea-randomizer:history';
 const SAVED_STORAGE_KEY = 'idea-randomizer:saved';
 
+type PickerKey = 'themeId' | 'audienceId' | 'problemId' | 'twistId';
+
 const createEntry = (idea: Idea): IdeaEntry => ({
-  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  id: `${idea.seed}-${Date.now()}`,
   idea,
   generatedAt: new Date().toISOString(),
 });
@@ -95,12 +100,18 @@ const ideaSummary = (idea: Idea) =>
 const optionLabel = (category: PromptCategory) =>
   `${category.title}${category.tags?.length ? ` · ${category.tags.join(', ')}` : ''}`;
 
+const sanitizeSeedInput = (value: string) =>
+  value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+
 export default function IdeaStudio() {
   const [currentIdea, setCurrentIdea] = useState<Idea | null>(null);
   const [taxonomy, setTaxonomy] = useState<PromptTaxonomy | null>(null);
+  const [packs, setPacks] = useState<PromptPack[]>([]);
   const [history, setHistory] = useState<IdeaEntry[]>([]);
   const [savedIdeas, setSavedIdeas] = useState<IdeaEntry[]>([]);
   const [filters, setFilters] = useState<GenerateIdeaOptions>({});
+  const [seedDraft, setSeedDraft] = useState<string>('');
+  const [lastSeed, setLastSeed] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -132,7 +143,16 @@ export default function IdeaStudio() {
       setLoading(true);
       setError(null);
       try {
-        const payload = options && Object.keys(options).length > 0 ? { ...options } : undefined;
+        const sanitizedOptions =
+          options && Object.keys(options).length > 0
+            ? (Object.fromEntries(
+                Object.entries(options).filter(
+                  ([, value]) => value !== undefined && value !== null && value !== '',
+                ),
+              ) as Partial<GenerateIdeaOptions>)
+            : undefined;
+        const payload =
+          sanitizedOptions && Object.keys(sanitizedOptions).length > 0 ? sanitizedOptions : undefined;
         const response = await fetch('/api/generate', {
           method: payload ? 'POST' : 'GET',
           headers: payload ? { 'Content-Type': 'application/json' } : undefined,
@@ -154,19 +174,24 @@ export default function IdeaStudio() {
         setCurrentIdea(idea);
         const entry = createEntry(idea);
         updateHistory((previous) => {
-          const deduped = previous.filter((item) => item.idea.headline !== idea.headline);
+          const deduped = previous.filter((item) => item.idea.seed !== idea.seed);
           return [entry, ...deduped];
         });
 
         if (data.taxonomy) {
           setTaxonomy(data.taxonomy);
         }
+        if (data.packs) {
+          setPacks(data.packs);
+        }
 
         setToast('✨ New idea generated');
         setTimeout(() => setToast(null), 2400);
+        return idea;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Something went wrong.';
         setError(message);
+        return undefined;
       } finally {
         setLoading(false);
       }
@@ -175,12 +200,16 @@ export default function IdeaStudio() {
   );
 
   useEffect(() => {
-    void fetchIdea();
+    void fetchIdea().then((idea) => {
+      if (idea) {
+        setLastSeed(idea.seed);
+      }
+    });
   }, [fetchIdea]);
 
-  const handleFilterChange = useCallback((key: keyof GenerateIdeaOptions, value: string) => {
+  const handleFilterChange = useCallback((key: PickerKey, value: string) => {
     setFilters((prev) => {
-      const next = { ...prev };
+      const next: GenerateIdeaOptions = { ...prev };
       if (value) {
         next[key] = value;
       } else {
@@ -190,24 +219,56 @@ export default function IdeaStudio() {
     });
   }, []);
 
+  const handlePackChange = useCallback((value: string) => {
+    setFilters((prev) => {
+      const next: GenerateIdeaOptions = { ...prev };
+      if (!value || next.packId === value) {
+        delete next.packId;
+      } else {
+        next.packId = value;
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSeedInputChange = useCallback((value: string) => {
+    setSeedDraft(sanitizeSeedInput(value));
+  }, []);
+
   const handleClearFilters = useCallback(() => {
     setFilters({});
+    setSeedDraft('');
     setToast('Filters cleared');
     setTimeout(() => setToast(null), 1800);
   }, []);
 
   const handleGenerate = useCallback(() => {
-    void fetchIdea(filters);
-  }, [fetchIdea, filters]);
+    const payload: GenerateIdeaOptions = { ...filters };
+    const isSeeded = Boolean(seedDraft);
+    if (isSeeded) {
+      payload.seed = seedDraft;
+    }
+
+    const hasPayload = Object.values(payload).some(
+      (value) => value !== undefined && value !== null && value !== '',
+    );
+
+    void fetchIdea(hasPayload ? payload : undefined).then((idea) => {
+      if (idea) {
+        setLastSeed(idea.seed);
+        if (!isSeeded) {
+          setSeedDraft('');
+        }
+      }
+    });
+  }, [fetchIdea, filters, seedDraft]);
 
   const handleSave = useCallback(() => {
     if (!currentIdea) {
       return;
     }
 
-    const alreadySaved = savedIdeas.some(
-      (entry) => entry.idea.headline === currentIdea.headline,
-    );
+    const alreadySaved = savedIdeas.some((entry) => entry.idea.seed === currentIdea.seed);
     if (alreadySaved) {
       setToast('Already saved');
       setTimeout(() => setToast(null), 1600);
@@ -216,7 +277,7 @@ export default function IdeaStudio() {
 
     updateSaved((previous) => {
       const entry = createEntry(currentIdea);
-      const deduped = previous.filter((item) => item.idea.headline !== currentIdea.headline);
+      const deduped = previous.filter((item) => item.idea.seed !== currentIdea.seed);
       return [entry, ...deduped].slice(0, 20);
     });
     setToast('💾 Idea saved');
@@ -237,6 +298,29 @@ export default function IdeaStudio() {
     setTimeout(() => setToast(null), 2000);
   }, [currentIdea]);
 
+  const handleCopySeed = useCallback(() => {
+    if (!currentIdea) {
+      return;
+    }
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      setToast('Clipboard not available');
+      setTimeout(() => setToast(null), 1800);
+      return;
+    }
+    void navigator.clipboard.writeText(currentIdea.seed);
+    setToast('🔑 Idea code copied');
+    setTimeout(() => setToast(null), 2000);
+  }, [currentIdea]);
+
+  const handleUseLastSeed = useCallback(() => {
+    if (!lastSeed) {
+      return;
+    }
+    setSeedDraft(lastSeed);
+    setToast('Loaded last idea code');
+    setTimeout(() => setToast(null), 1600);
+  }, [lastSeed]);
+
   const themeOptions = useMemo(
     () => (taxonomy ? sortCategories(taxonomy.themes) : []),
     [taxonomy],
@@ -252,6 +336,14 @@ export default function IdeaStudio() {
   const twistOptions = useMemo(
     () => (taxonomy ? sortCategories(taxonomy.twists) : []),
     [taxonomy],
+  );
+  const packMap = useMemo(
+    () => new Map<string, PromptPack>(packs.map((pack) => [pack.id, pack])),
+    [packs],
+  );
+  const selectedPack = useMemo(
+    () => (filters.packId ? packMap.get(filters.packId) ?? null : null),
+    [filters.packId, packMap],
   );
 
   return (
@@ -269,6 +361,66 @@ export default function IdeaStudio() {
             MVP concept.
           </p>
         </header>
+
+        {packs.length > 0 && (
+          <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-800/40 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-200">
+                  Prompt packs
+                </h3>
+                <p className="text-xs text-slate-300">
+                  Quick-start mixes curated from the content library.
+                </p>
+              </div>
+              {filters.packId && (
+                <button
+                  type="button"
+                  className="rounded-full border border-emerald-400/40 px-3 py-1 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/80 hover:text-emerald-100"
+                  onClick={() => handlePackChange('')}
+                >
+                  Clear pack
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {packs.map((pack) => {
+                const isActive = pack.id === filters.packId;
+                return (
+                  <button
+                    type="button"
+                    key={pack.id}
+                    onClick={() => handlePackChange(pack.id)}
+                    className={[
+                      'min-w-[220px] flex-1 rounded-2xl border p-4 text-left transition',
+                      isActive
+                        ? 'border-emerald-400/60 bg-emerald-500/10 shadow-inner shadow-emerald-500/20'
+                        : 'border-white/10 bg-slate-900/40 hover:border-emerald-300/40',
+                    ].join(' ')}
+                  >
+                    <span className="text-sm font-semibold text-white">{pack.title}</span>
+                    <p className="mt-2 line-clamp-3 text-xs text-slate-300">{pack.description}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-wide text-emerald-200">
+                      {pack.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-emerald-400/30 px-2 py-0.5"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedPack?.inspiration && (
+              <p className="text-xs text-slate-400">
+                Inspiration: <span className="text-slate-200">{selectedPack.inspiration}</span>
+              </p>
+            )}
+          </section>
+        )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm text-slate-300">
@@ -337,6 +489,40 @@ export default function IdeaStudio() {
           </label>
         </div>
 
+        <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 bg-slate-800/40 p-4">
+          <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm text-slate-300">
+            Share code (optional)
+            <input
+              className="rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-white outline-none transition focus:border-emerald-300/60 focus:ring focus:ring-emerald-500/20"
+              placeholder="e.g. A1B2C3D4"
+              value={seedDraft}
+              maxLength={12}
+              onChange={(event) => handleSeedInputChange(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="inline-flex items-center rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-200 disabled:opacity-40"
+            onClick={handleUseLastSeed}
+            disabled={!lastSeed}
+          >
+            Use last code
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:border-rose-400/60 hover:text-rose-200 disabled:opacity-40"
+            onClick={() => setSeedDraft('')}
+            disabled={!seedDraft}
+          >
+            Clear
+          </button>
+        </div>
+        {lastSeed && (
+          <p className="text-xs text-slate-400">
+            Last generated code: <span className="text-emerald-200">{lastSeed}</span>
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -395,6 +581,23 @@ export default function IdeaStudio() {
                     ))}
                   </ul>
                 </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-500/5 px-3 py-1 font-semibold uppercase tracking-wide text-emerald-200">
+                    Code: {currentIdea.seed}
+                  </span>
+                  {currentIdea.originPackId && (
+                    <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 font-semibold uppercase tracking-wide text-sky-200">
+                      Pack: {packMap.get(currentIdea.originPackId)?.title ?? currentIdea.originPackId}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-white/10 px-3 py-1 font-semibold uppercase tracking-wide text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+                    onClick={handleCopySeed}
+                  >
+                    Copy code
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {currentIdea.tags.map((tag) => (
                     <span
@@ -451,7 +654,13 @@ export default function IdeaStudio() {
                   className="rounded-2xl border border-white/5 bg-slate-800/60 p-3 transition hover:border-emerald-400/40"
                 >
                   <p className="text-sm font-semibold text-white">{entry.idea.headline}</p>
-                  <p className="mt-1 text-xs text-slate-400">{formatRelativeTime(entry.generatedAt)}</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {formatRelativeTime(entry.generatedAt)} · code{' '}
+                    <span className="text-emerald-200">{entry.idea.seed}</span>
+                    {entry.idea.originPackId
+                      ? ` · ${packMap.get(entry.idea.originPackId)?.title ?? entry.idea.originPackId}`
+                      : ''}
+                  </p>
                 </li>
               ))
             )}
@@ -476,7 +685,11 @@ export default function IdeaStudio() {
                 >
                   <p className="text-sm font-semibold text-white">{entry.idea.headline}</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    {entry.idea.audience.title} · {entry.idea.twist.title}
+                    {entry.idea.audience.title} · {entry.idea.twist.title} · code{' '}
+                    <span className="text-emerald-200">{entry.idea.seed}</span>
+                    {entry.idea.originPackId
+                      ? ` · ${packMap.get(entry.idea.originPackId)?.title ?? entry.idea.originPackId}`
+                      : ''}
                   </p>
                 </li>
               ))

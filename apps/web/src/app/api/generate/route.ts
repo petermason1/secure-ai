@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   GenerateIdeaOptions,
   Idea,
+  PromptPack,
   PromptTaxonomy,
   generateIdea,
+  getPromptPacks,
   getPromptTaxonomy,
-  listCategory,
 } from "@idea-randomizer/core";
 
 type GenerateRequestBody = Partial<GenerateIdeaOptions> & {
@@ -21,10 +22,12 @@ type ErrorResponse = {
 type SuccessResponse = {
   ideas: Idea[];
   taxonomy?: PromptTaxonomy;
+  packs?: PromptPack[];
   meta: {
     generatedAt: string;
     count: number;
     filtersApplied: Partial<GenerateIdeaOptions>;
+    seeds: string[];
   };
 };
 
@@ -45,8 +48,16 @@ const respondWithError = (
 
 const ensureValidIds = (options: GenerateIdeaOptions): ErrorResponse | null => {
   const taxonomy = getPromptTaxonomy();
+  const packs = getPromptPacks();
 
   const invalidEntries: Record<string, string> = {};
+
+  if (options.packId) {
+    const packExists = packs.some((pack) => pack.id === options.packId);
+    if (!packExists) {
+      invalidEntries.packId = options.packId;
+    }
+  }
 
   if (options.themeId) {
     const exists = taxonomy.themes.some((item) => item.id === options.themeId);
@@ -130,6 +141,8 @@ const parseGenerateRequest = async (
     audienceId,
     problemId,
     twistId,
+    packId,
+    seed,
     includeTags,
     avoidTags,
   } = body as Record<string, unknown>;
@@ -150,6 +163,8 @@ const parseGenerateRequest = async (
     audienceId: typeof audienceId === "string" ? audienceId : undefined,
     problemId: typeof problemId === "string" ? problemId : undefined,
     twistId: typeof twistId === "string" ? twistId : undefined,
+    packId: typeof packId === "string" ? packId : undefined,
+    seed: typeof seed === "string" ? seed : undefined,
     includeTags: parseStringArray(includeTags),
     avoidTags: parseStringArray(avoidTags),
   };
@@ -166,23 +181,19 @@ const parseGenerateRequest = async (
 };
 
 export function GET() {
+  const taxonomy = getPromptTaxonomy();
+  const packs = getPromptPacks();
+  const idea = generateIdea();
+
   return NextResponse.json<SuccessResponse>({
-    ideas: [
-      generateIdea({
-        includeTags: [],
-        avoidTags: [],
-      }),
-    ],
-    taxonomy: {
-      themes: listCategory("themes"),
-      audiences: listCategory("audiences"),
-      problems: listCategory("problems"),
-      twists: listCategory("twists"),
-    },
+    ideas: [idea],
+    taxonomy,
+    packs,
     meta: {
       generatedAt: new Date().toISOString(),
       count: 1,
       filtersApplied: {},
+      seeds: [idea.seed],
     },
   });
 }
@@ -217,6 +228,7 @@ export async function POST(req: NextRequest) {
       generatedAt: new Date().toISOString(),
       count,
       filtersApplied: filters,
+      seeds: ideas.map((idea) => idea.seed),
     },
   });
 }
