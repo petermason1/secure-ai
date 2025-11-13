@@ -395,7 +395,7 @@ export default function DocumentProcessor() {
             {file && status.stage !== 'complete' && status.stage !== 'error' && (
               <button
                 onClick={handleProcess}
-                disabled={status.stage !== 'idle' && status.stage !== 'error'}
+                disabled={!(status.stage === 'idle' || status.stage === 'complete' || status.stage === 'error')}
                 className="w-full rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {status.stage === 'idle' ? 'Process Invoice' : 'Processing...'}
