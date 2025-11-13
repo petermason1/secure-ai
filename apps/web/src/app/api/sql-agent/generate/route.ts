@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { createAIClient, getAIModel } from '@/lib/openai-client';
 
 // System prompt for SQL generation
 const SYSTEM_PROMPT = `You are an expert PostgreSQL database architect specializing in Supabase.
@@ -30,10 +29,15 @@ Output format:
 5. Sample queries with comments`;
 
 export async function POST(request: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  // Lazy-load client inside handler (not at module load)
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'AI Gateway API key not configured' }, { status: 500 });
   }
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });  try {
+
+  const openai = createAIClient();
+  const model = getAIModel(); // Uses free Gemini by default
+  
+  try {
     const body = await request.json();
     const { description, features = [], context = 'general' } = body;
 
@@ -61,9 +65,9 @@ Include:
 
 Be thorough and production-ready. Include explanatory comments.`;
 
-    // Generate SQL using OpenAI
+    // Generate SQL using AI (free Gemini by default)
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: model, // Free Gemini by default, premium when monetized
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
@@ -85,7 +89,7 @@ Be thorough and production-ready. Include explanatory comments.`;
     const validation = validateSQL(generatedSQL);
 
     // Generate explanation
-    const explanation = await generateExplanation(generatedSQL);
+    const explanation = await generateExplanation(openai, generatedSQL, model);
 
     // Generate instructions
     const instructions = {
@@ -102,7 +106,7 @@ Be thorough and production-ready. Include explanatory comments.`;
       instructions,
       deployed: false,
       metadata: {
-        model: 'gpt-4',
+        model: model,
         tokens: completion.usage?.total_tokens || 0,
         generated_at: new Date().toISOString()
       }
@@ -176,10 +180,10 @@ function validateSQL(sql: string): {
 }
 
 // Generate human-readable explanation
-async function generateExplanation(sql: string): Promise<string> {
+async function generateExplanation(openai: any, sql: string, model: string): Promise<string> {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: model, // Use same model as main generation
       messages: [
         {
           role: 'system',
