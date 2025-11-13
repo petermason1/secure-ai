@@ -12,7 +12,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 // import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';const crmApiUrl = process.env.CRM_API_URL || 'https://mock.crm-api.com/update-opportunity';
 const emailApiUrl = process.env.EMAIL_API_URL || 'https://mock.email-api.com/send-draft';
 
 // Cost control constants
