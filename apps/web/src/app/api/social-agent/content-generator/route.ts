@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
+import { createAIClient, getAIModel } from '@/lib/openai-client';
 
 export async function POST(request: NextRequest) {
   // Lazy-load clients inside handler (not at module load)
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'AI Gateway API key not configured' }, { status: 500 });
   }
   
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = createAIClient();
+  const model = getAIModel(); // Uses free Gemini by default
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     const { prompt, platform, tone } = await request.json();
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: model, // Free Gemini by default, upgrade to premium when monetized
       messages: [
         {
           role: 'system',
