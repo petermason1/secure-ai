@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
 // Invoice data extraction schema
 const invoiceSchema = {
   type: 'object' as const,
@@ -38,7 +28,14 @@ const invoiceSchema = {
 };
 
 export async function POST(request: NextRequest) {
-  try {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  }
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });  try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 

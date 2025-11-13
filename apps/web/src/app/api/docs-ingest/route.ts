@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 const TOP_10_DOCS = [
   { name: 'React', url: 'https://react.dev', priority: 1 },
   { name: 'Python', url: 'https://docs.python.org', priority: 1 },
@@ -19,7 +15,10 @@ const TOP_10_DOCS = [
 ];
 
 export async function POST(request: NextRequest) {
-  try {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+  }
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);  try {
     const { action, docName } = await request.json();
 
     if (action === 'list') {

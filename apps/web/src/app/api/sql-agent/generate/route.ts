@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // System prompt for SQL generation
@@ -31,7 +30,10 @@ Output format:
 5. Sample queries with comments`;
 
 export async function POST(request: NextRequest) {
-  try {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  }
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });  try {
     const body = await request.json();
     const { description, features = [], context = 'general' } = body;
 

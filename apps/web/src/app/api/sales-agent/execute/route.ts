@@ -9,20 +9,10 @@
  * - Executes tools (CRM, Email)
  * - Implements cost control
  * - Logs everything to audit_logs
- * 
- * This route is called internally by Route 1 (trigger)
- */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
-
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-const internalApiSecret = process.env.INTERNAL_API_SECRET!;
-const crmApiUrl = process.env.CRM_API_URL || 'https://mock.crm-api.com/update-opportunity';
+// import { createClient } from '@supabase/supabase-js';
+import OpenAI from 'openai';const crmApiUrl = process.env.CRM_API_URL || 'https://mock.crm-api.com/update-opportunity';
 const emailApiUrl = process.env.EMAIL_API_URL || 'https://mock.email-api.com/send-draft';
 
 // Cost control constants
@@ -37,7 +27,7 @@ const TOOL_CALL_COST = 0.01; // Estimated cost per tool call
 /**
  * Log to audit_logs table
  */
-async function logStep(
+async function logStep(supabase: any, 
   jobId: string,
   step: string,
   details: any,
@@ -56,7 +46,7 @@ async function logStep(
 /**
  * Safe tool call with retry logic and circuit breaker
  */
-async function safeToolCall(
+async function safeToolCall(supabase: any, 
   toolName: string,
   url: string,
   payload: any,
@@ -65,7 +55,7 @@ async function safeToolCall(
 ): Promise<boolean> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      await logStep(jobId, `TOOL_${toolName}_ATTEMPT`, { attempt, payload }, true, TOOL_CALL_COST);
+      await logStep(supabase, jobId, `TOOL_${toolName}_ATTEMPT`, { attempt, payload }, true, TOOL_CALL_COST);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -75,13 +65,13 @@ async function safeToolCall(
       });
 
       if (response.ok) {
-        await logStep(jobId, `TOOL_${toolName}_SUCCESS`, { attempt }, true, 0);
+        await logStep(supabase, jobId, `TOOL_${toolName}_SUCCESS`, { attempt }, true, 0);
         return true;
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      await logStep(
+      await logStep(supabase, 
         jobId,
         `TOOL_${toolName}_FAILURE`,
         { attempt, error: error instanceof Error ? error.message : 'Unknown' },
@@ -104,8 +94,8 @@ async function safeToolCall(
 /**
  * AI Analysis - Score and classify lead
  */
-async function analyzeLead(jobId: string, leadName: string, companyContext: string): Promise<number> {
-  await logStep(jobId, 'AI_ANALYSIS_START', { leadName, companyContext }, true, 0);
+async function analyzeLead(supabase: any, jobId: string, leadName: string, companyContext: string): Promise<number> {
+  await logStep(supabase, jobId, 'AI_ANALYSIS_START', { leadName, companyContext }, true, 0);
 
   try {
     const completion = await openai.chat.completions.create({
@@ -127,7 +117,7 @@ async function analyzeLead(jobId: string, leadName: string, companyContext: stri
     const scoreText = completion.choices[0]?.message?.content?.trim() || '50';
     const score = Math.min(100, Math.max(0, parseInt(scoreText) || 50));
 
-    await logStep(
+    await logStep(supabase, 
       jobId,
       'AI_ANALYSIS_COMPLETE',
       { score, raw_response: scoreText },
@@ -137,7 +127,7 @@ async function analyzeLead(jobId: string, leadName: string, companyContext: stri
 
     return score;
   } catch (error) {
-    await logStep(
+    await logStep(supabase, 
       jobId,
       'AI_ANALYSIS_FAILED',
       { error: error instanceof Error ? error.message : 'Unknown' },
@@ -153,7 +143,20 @@ async function analyzeLead(jobId: string, leadName: string, companyContext: stri
 // ============================================================================
 
 export async function POST(request: NextRequest) {
-  // Verify internal API secret
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  }
+  if (!process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: "Internal API secret not configured" }, { status: 500 });
+  }
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const internalApiSecret = process.env.INTERNAL_API_SECRET;
+  const crmApiUrl = process.env.CRM_API_URL || "https://mock.crm-api.com/update-opportunity";
+  const emailApiUrl = process.env.EMAIL_API_URL || "https://mock.email-api.com/send-draft";  // Verify internal API secret
   const secretHeader = request.headers.get('X-Internal-Secret');
   if (secretHeader !== internalApiSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -175,7 +178,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (leadError || !lead) {
-      await logStep(job_id, 'FATAL_EXCEPTION', { error: 'Lead not found' }, false, 0);
+      await logStep(supabase, job_id, 'FATAL_EXCEPTION', { error: 'Lead not found' }, false, 0);
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
     }
 
@@ -184,20 +187,20 @@ export async function POST(request: NextRequest) {
     // Step 1: AI Analysis
     let leadScore: number;
     try {
-      leadScore = await analyzeLead(job_id, lead.lead_name, lead.company_context);
+      leadScore = await analyzeLead(supabase, job_id, lead.lead_name, lead.company_context);
       currentCost += AI_ANALYSIS_COST;
 
       // Update lead with score
       await supabase.from('leads').update({ lead_score: leadScore }).eq('job_id', job_id);
     } catch (error) {
-      await logStep(job_id, 'FATAL_EXCEPTION', { error: 'AI analysis failed' }, false, currentCost);
+      await logStep(supabase, job_id, 'FATAL_EXCEPTION', { error: 'AI analysis failed' }, false, currentCost);
       await supabase.from('leads').update({ final_status: 'FAILED' }).eq('job_id', job_id);
       return NextResponse.json({ error: 'AI analysis failed' }, { status: 500 });
     }
 
     // Step 2: Cost Control Check
     if (currentCost >= MAX_COST_USD) {
-      await logStep(
+      await logStep(supabase, 
         job_id,
         'COST_EXCEEDED',
         { current_cost: currentCost, max_cost: MAX_COST_USD },
@@ -210,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Rule-Based Routing
     const isHighValue = leadScore >= 80;
-    await logStep(job_id, 'ROUTING_DECISION', { score: leadScore, is_high_value: isHighValue }, true, 0);
+    await logStep(supabase, job_id, 'ROUTING_DECISION', { score: leadScore, is_high_value: isHighValue }, true, 0);
 
     // Step 4: Execute Tools Based on Routing
     let crmSuccess = false;
@@ -218,10 +221,10 @@ export async function POST(request: NextRequest) {
 
     if (isHighValue) {
       // HIGH-VALUE PATH: CRM + Email
-      await logStep(job_id, 'HIGH_VALUE_PATH', { actions: ['CRM', 'EMAIL'] }, true, 0);
+      await logStep(supabase, job_id, 'HIGH_VALUE_PATH', { actions: ['CRM', 'EMAIL'] }, true, 0);
 
       // Execute CRM
-      crmSuccess = await safeToolCall(
+      crmSuccess = await safeToolCall(supabase, 
         'CRM',
         crmApiUrl,
         {
@@ -237,7 +240,7 @@ export async function POST(request: NextRequest) {
 
       // Only execute Email if CRM succeeded (transaction-like behavior)
       if (crmSuccess) {
-        emailSuccess = await safeToolCall(
+        emailSuccess = await safeToolCall(supabase, 
           'EMAIL',
           emailApiUrl,
           {
@@ -249,7 +252,7 @@ export async function POST(request: NextRequest) {
         );
         currentCost += TOOL_CALL_COST;
       } else {
-        await logStep(
+        await logStep(supabase, 
           job_id,
           'TOOL_FAILURE:CRM',
           { reason: 'CRM failed, skipping email' },
@@ -259,9 +262,9 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // LOW-VALUE PATH: CRM only (low priority)
-      await logStep(job_id, 'LOW_VALUE_PATH', { actions: ['CRM_LOW'] }, true, 0);
+      await logStep(supabase, job_id, 'LOW_VALUE_PATH', { actions: ['CRM_LOW'] }, true, 0);
 
-      crmSuccess = await safeToolCall(
+      crmSuccess = await safeToolCall(supabase, 
         'CRM',
         `${crmApiUrl}/low-priority`,
         {
@@ -284,7 +287,7 @@ export async function POST(request: NextRequest) {
       email_sent: emailSuccess,
     }).eq('job_id', job_id);
 
-    await logStep(
+    await logStep(supabase, 
       job_id,
       'EXECUTION_FINAL_STATUS',
       {

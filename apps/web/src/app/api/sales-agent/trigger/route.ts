@@ -15,13 +15,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createCipheriv } from 'crypto';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-const internalApiSecret = process.env.INTERNAL_API_SECRET!;
-const piiEncryptionKey = process.env.PII_ENCRYPTION_KEY || '';
 
-function encryptPII(plain: string) {
+function encryptPII(plain: string, piiEncryptionKey: string) {
   if (!piiEncryptionKey || piiEncryptionKey.length < 32) {
     return { cipher: plain, iv: '', tag: '', algo: 'plain' };
   }
@@ -44,7 +39,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { lead_name, company_context } = body;
 
-    // Validate input
+  // Lazy-load clients and env vars inside handler
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+  }
+  if (!process.env.INTERNAL_API_SECRET) {
+    return NextResponse.json({ error: "Internal API secret not configured" }, { status: 500 });
+  }
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const internalApiSecret = process.env.INTERNAL_API_SECRET;
+  const piiEncryptionKey = process.env.PII_ENCRYPTION_KEY || "";    // Validate input
     if (!lead_name || !company_context) {
       return NextResponse.json(
         { error: 'lead_name and company_context are required' },
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Encrypt PII and store in pii_vault, returning token id
     const piiToken = `tok-${Date.now()}-${randomBytes(6).toString('hex')}`;
-    const enc = encryptPII(String(lead_name).trim());
+    const enc = encryptPII(String(lead_name).trim(), piiEncryptionKey);
     await supabase.from('pii_vault').insert({
       token_id: piiToken,
       field: 'lead_name',

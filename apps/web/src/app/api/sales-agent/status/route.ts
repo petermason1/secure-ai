@@ -1,19 +1,17 @@
-/**
- * Big Technical Execution Engine - Tier 2: Sales Automation Agent
- * 
- * API Route: /api/sales-agent/status
- * 
- * Status polling endpoint that uses Supabase get_job_status function
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 export async function GET(request: NextRequest) {
+  // Lazy-load client inside handler
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+  }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const jobId = searchParams.get('job_id');
@@ -22,25 +20,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'job_id is required' }, { status: 400 });
     }
 
-    // Call Supabase function
+    // Call the Supabase function
     const { data, error } = await supabase.rpc('get_job_status', {
       p_job_id: jobId,
     });
 
     if (error) {
-      console.error('Status function error:', error);
-      return NextResponse.json({ error: 'Failed to get status' }, { status: 500 });
+      throw error;
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('Status route error:', error);
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
