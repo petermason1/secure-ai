@@ -9,10 +9,11 @@
  * - Executes tools (CRM, Email)
  * - Implements cost control
  * - Logs everything to audit_logs
+ */
 
 import { NextRequest, NextResponse } from 'next/server';
-// import { createClient } from '@supabase/supabase-js';
-const emailApiUrl = process.env.EMAIL_API_URL || 'https://mock.email-api.com/send-draft';
+import { createClient } from '@supabase/supabase-js';
+import OpenAI from 'openai';
 
 // Cost control constants
 const MAX_COST_USD = 0.50; // Maximum cost per lead processing
@@ -54,7 +55,7 @@ async function safeToolCall(supabase: any,
 ): Promise<boolean> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      await logStep(supabase, jobId, `TOOL_${toolName}_ATTEMPT`, { attempt, payload }, true, TOOL_CALL_COST);
+      await logStep(supabase, jobId, `TOOL_${toolName}_ATTEMPT`, { attempt, payload }, true, 0.01);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -93,7 +94,7 @@ async function safeToolCall(supabase: any,
 /**
  * AI Analysis - Score and classify lead
  */
-async function analyzeLead(supabase: any, jobId: string, leadName: string, companyContext: string): Promise<number> {
+async function analyzeLead(supabase: any, openai: any, jobId: string, leadName: string, companyContext: string): Promise<number> {
   await logStep(supabase, jobId, 'AI_ANALYSIS_START', { leadName, companyContext }, true, 0);
 
   try {
@@ -121,7 +122,7 @@ async function analyzeLead(supabase: any, jobId: string, leadName: string, compa
       'AI_ANALYSIS_COMPLETE',
       { score, raw_response: scoreText },
       true,
-      AI_ANALYSIS_COST
+      0.01
     );
 
     return score;
@@ -131,7 +132,7 @@ async function analyzeLead(supabase: any, jobId: string, leadName: string, compa
       'AI_ANALYSIS_FAILED',
       { error: error instanceof Error ? error.message : 'Unknown' },
       false,
-      AI_ANALYSIS_COST
+      0.01
     );
     throw error;
   }
@@ -186,8 +187,8 @@ export async function POST(request: NextRequest) {
     // Step 1: AI Analysis
     let leadScore: number;
     try {
-      leadScore = await analyzeLead(supabase, job_id, lead.lead_name, lead.company_context);
-      currentCost += AI_ANALYSIS_COST;
+      leadScore = await analyzeLead(supabase, openai, job_id, lead.lead_name, lead.company_context);
+      currentCost += 0.01;
 
       // Update lead with score
       await supabase.from('leads').update({ lead_score: leadScore }).eq('job_id', job_id);
@@ -198,11 +199,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Cost Control Check
-    if (currentCost >= MAX_COST_USD) {
+    if (currentCost >= 0.50) {
       await logStep(supabase, 
         job_id,
         'COST_EXCEEDED',
-        { current_cost: currentCost, max_cost: MAX_COST_USD },
+        { current_cost: currentCost, max_cost: 0.50 },
         false,
         0
       );
@@ -235,7 +236,7 @@ export async function POST(request: NextRequest) {
         job_id
       );
 
-      currentCost += TOOL_CALL_COST;
+      currentCost += 0.01;
 
       // Only execute Email if CRM succeeded (transaction-like behavior)
       if (crmSuccess) {
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest) {
           },
           job_id
         );
-        currentCost += TOOL_CALL_COST;
+        currentCost += 0.01;
       } else {
         await logStep(supabase, 
           job_id,
@@ -274,7 +275,7 @@ export async function POST(request: NextRequest) {
         },
         job_id
       );
-      currentCost += TOOL_CALL_COST;
+      currentCost += 0.01;
     }
 
     // Step 5: Final Status
