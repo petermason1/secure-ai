@@ -366,7 +366,7 @@ function StatCard({ label, value, change, trend, icon }: any) {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
           <p className="mt-2 text-2xl font-bold text-white">{value}</p>
           {change && (
-            <p className={`mt-1 text-xs font-semibold ${trend ? trendColors[trend] : 'text-slate-400'}`}>
+              <p className={`mt-1 text-xs font-semibold ${trend ? trendColors[trend as keyof typeof trendColors] : 'text-slate-400'}`}>
               {trend === 'up' && '↑ '}
               {trend === 'down' && '↓ '}
               {change}
@@ -401,7 +401,7 @@ function ActivityItem({ icon, title, time, status }: any) {
   };
 
   return (
-    <div className={`flex items-start gap-3 rounded-lg border p-3 ${statusColors[status] || statusColors.info}`}>
+      <div className={`flex items-start gap-3 rounded-lg border p-3 ${statusColors[status as keyof typeof statusColors] || statusColors.info}`}>
       <span className="text-xl">{icon}</span>
       <div className="flex-1">
         <p className="text-sm font-semibold text-white">{title}</p>
