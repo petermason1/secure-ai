@@ -5,40 +5,44 @@ import IdeaStudio from "./components/IdeaStudio";
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(14,165,233,0.16),_transparent_60%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(45,212,191,0.18),transparent_55%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.16),transparent_60%)]" />
       <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-lg font-bold text-emerald-950">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 py-3 sm:px-5 sm:py-4 md:flex-row md:items-center md:justify-between md:gap-6 lg:px-8 lg:py-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-bold text-emerald-950 sm:h-10 sm:w-10 sm:text-base md:text-lg">
               IR
             </span>
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">Idea Randomizer</p>
-              <h1 className="text-xl font-semibold text-white">Your AI concept co-pilot</h1>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-emerald-200 sm:text-xs md:text-sm">
+                Idea Randomizer
+              </p>
+              <h1 className="text-sm font-semibold text-white sm:text-lg md:text-xl">
+                Your AI concept co-pilot
+              </h1>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+          <nav className="flex w-full flex-col items-stretch gap-2 text-[11px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:text-xs md:w-auto md:flex-nowrap md:justify-end md:text-sm">
             <Link
               href="#how-it-works"
-              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+              className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
             >
               How it works
             </Link>
             <Link
               href="/learn"
-              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+              className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
             >
               Learn AI
             </Link>
             <Link
               href="/packs"
-              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+              className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
             >
               Prompt packs
             </Link>
             <Link
               href="#faq"
-              className="rounded-full border border-white/20 px-4 py-2 text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+              className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
             >
               FAQ
             </Link>
@@ -46,56 +50,56 @@ export default function Home() {
               href="https://github.com/petermason1/idea-gen"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold text-slate-900 shadow hover:bg-slate-100"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow transition hover:bg-slate-100 sm:px-4 sm:text-sm"
             >
               View on GitHub
             </a>
-          </div>
+          </nav>
         </div>
       </header>
 
-      <main className="px-6 pb-24 pt-12 lg:px-8">
-        <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 text-center">
-          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-emerald-200">
+      <main className="px-3 pb-12 pt-6 sm:px-5 md:pb-18 md:pt-10 lg:px-8">
+        <section className="mx-auto flex w-full max-w-4xl flex-col items-start gap-2.5 text-left sm:items-center sm:gap-4 sm:text-center">
+          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-200 sm:px-4 sm:text-xs">
             Build faster
           </span>
-          <h2 className="text-4xl font-semibold leading-tight text-white sm:text-5xl">
+          <h2 className="max-w-3xl text-[24px] font-semibold leading-snug text-white sm:text-3xl md:text-4xl lg:text-5xl">
             Spin up thoughtful startup concepts and learn AI along the way.
           </h2>
-          <p className="max-w-2xl text-lg text-slate-300">
+          <p className="max-w-2xl text-[13px] leading-relaxed text-slate-300 sm:text-base md:text-lg">
             Blend curated prompts with smart randomization to explore new markets, surface
             differentiators, and create MVP-ready narratives. Each step explains the AI thinking so
             founders and teams build confidence, not just ideas.
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex w-full flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3">
             <Link
               href="#workspace"
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300 sm:w-auto sm:px-5 md:px-6 md:py-3"
             >
               Launch the studio
             </Link>
             <Link
               href="#faq"
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-200"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:w-auto sm:px-5 md:px-6 md:py-3"
             >
               Learn more
             </Link>
             <Link
               href="/learn"
-              className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-6 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/80 hover:text-white"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/80 hover:text-white sm:w-auto sm:px-5 md:px-6 md:py-3"
             >
               Explore AI lessons
             </Link>
           </div>
         </section>
 
-        <section id="workspace" className="mt-14">
+        <section id="workspace" className="mt-10 sm:mt-14">
           <IdeaStudio />
         </section>
 
         <section
           id="how-it-works"
-          className="mx-auto mt-20 grid w-full max-w-5xl gap-6 rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-2xl shadow-slate-950/30 md:grid-cols-3"
+          className="mx-auto mt-12 grid w-full max-w-5xl gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-xl shadow-slate-950/30 sm:p-6 sm:gap-6 sm:rounded-3xl md:mt-20 md:grid-cols-3 md:p-8"
         >
           {[
             {
@@ -116,20 +120,22 @@ export default function Home() {
           ].map((item) => (
             <article
               key={item.title}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-800/40 p-5"
+              className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-800/40 p-3 sm:gap-3 sm:p-5"
             >
-              <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-              <p className="text-sm text-slate-300">{item.description}</p>
+              <h3 className="text-base font-semibold text-white sm:text-lg">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-slate-300">{item.description}</p>
             </article>
           ))}
         </section>
 
         <section
           id="faq"
-          className="mx-auto mt-20 w-full max-w-4xl rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-xl shadow-slate-950/30"
+          className="mx-auto mt-12 w-full max-w-4xl rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-xl shadow-slate-950/30 sm:rounded-3xl sm:p-6 md:mt-20 md:p-8"
         >
-          <h3 className="text-2xl font-semibold text-white">Frequently asked</h3>
-          <div className="mt-6 space-y-6">
+          <h3 className="text-base font-semibold text-white sm:text-2xl">
+            Frequently asked
+          </h3>
+          <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-6">
             <article>
               <h4 className="text-lg font-semibold text-emerald-200">
                 Can I export or share these ideas?
@@ -162,8 +168,8 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-white/10 bg-slate-950/80">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-sm text-slate-400 lg:px-8">
-          <p>
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-3 py-5 text-[11px] text-slate-400 sm:px-6 sm:text-sm lg:px-8">
+          <p className="leading-relaxed">
             © {new Date().getFullYear()} Idea Randomizer. Crafted for founders and product teams.
           </p>
           <a
