@@ -192,12 +192,27 @@ export default function ValuationTracker() {
   return (
     <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-6">
       <div className="mb-6">
+        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-4">
+          <p className="text-yellow-300 text-sm font-semibold mb-1">⚠️ Important Disclaimer</p>
+          <p className="text-yellow-200 text-xs">
+            This is a <strong>potential/aspirational valuation</strong> based on projections, not actual revenue. 
+            Current revenue: £0. Real market valuation requires paying customers and proven revenue.
+          </p>
+        </div>
         <h2 className="text-3xl font-bold text-emerald-200 mb-2">
-          Current Valuation: £{(metrics.totalValue / 1000000).toFixed(2)}M
+          Potential Valuation: £{(metrics.totalValue / 1000000).toFixed(2)}M
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-400 mb-2">
           Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
         </p>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-red-400 font-semibold">Current Revenue: £0</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-400 font-semibold">Projected 12m ARR: £{(metrics.revenue.projected12m / 1000000).toFixed(1)}M</span>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3 mb-6">
@@ -260,13 +275,21 @@ export default function ValuationTracker() {
 
       <div className="mt-6 rounded-lg border border-white/10 bg-slate-900/60 p-4">
         <h3 className="font-semibold text-white mb-3">Valuation Methodology</h3>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 text-sm text-slate-300 mb-4">
           <li>• <strong>SaaS Multiple:</strong> 10x ARR (industry standard for early-stage)</li>
-          <li>• <strong>Built Features:</strong> 100% value (live and generating potential revenue)</li>
+          <li>• <strong>Built Features:</strong> 100% value (assumes potential revenue, not actual)</li>
           <li>• <strong>Planned Features:</strong> 30% value (discounted for execution risk)</li>
           <li>• <strong>Revenue Projections:</strong> Based on comparable SaaS companies at similar stage</li>
           <li>• <strong>Enterprise Positioning:</strong> £100k service tier adds significant premium</li>
         </ul>
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+          <p className="text-red-300 text-xs font-semibold mb-1">⚠️ Reality Check</p>
+          <p className="text-red-200 text-xs">
+            <strong>Current Status:</strong> Pre-revenue. This valuation assumes features will generate the projected revenue. 
+            Real market valuation requires: (1) Paying customers, (2) Proven revenue, (3) Market traction. 
+            Until then, this is a <strong>projection tool</strong>, not a real valuation.
+          </p>
+        </div>
       </div>
 
       <div className="mt-6 rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4">

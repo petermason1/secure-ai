@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { createAIClient, getAIModel } from '@/lib/openai-client';
 // Invoice data extraction schema
 const invoiceSchema = {
   type: 'object' as const,
@@ -31,11 +31,14 @@ export async function POST(request: NextRequest) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
   }
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "AI Gateway API key not configured" }, { status: 500 });
   }
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });  try {
+  const openai = createAIClient();
+  const model = getAIModel();
+
+  try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     // 5. OpenAI Function Calling for structured extraction
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: model, // Uses free Gemini by default, upgrade to premium when monetized
       messages: [
         {
           role: 'system',

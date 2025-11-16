@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { createAIClient, getAIModel } from '@/lib/openai-client';
 
 // Cost control constants
 const MAX_COST_USD = 0.50; // Maximum cost per lead processing
@@ -94,12 +94,12 @@ async function safeToolCall(supabase: any,
 /**
  * AI Analysis - Score and classify lead
  */
-async function analyzeLead(supabase: any, openai: any, jobId: string, leadName: string, companyContext: string): Promise<number> {
+async function analyzeLead(supabase: any, openai: any, model: string, jobId: string, leadName: string, companyContext: string): Promise<number> {
   await logStep(supabase, jobId, 'AI_ANALYSIS_START', { leadName, companyContext }, true, 0);
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: model, // Uses free Gemini by default, upgrade to premium when monetized
       messages: [
         {
           role: 'system',
@@ -146,14 +146,15 @@ export async function POST(request: NextRequest) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
   }
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "AI Gateway API key not configured" }, { status: 500 });
   }
   if (!process.env.INTERNAL_API_SECRET) {
     return NextResponse.json({ error: "Internal API secret not configured" }, { status: 500 });
   }
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = createAIClient();
+  const model = getAIModel();
   const internalApiSecret = process.env.INTERNAL_API_SECRET;
   const crmApiUrl = process.env.CRM_API_URL || "https://mock.crm-api.com/update-opportunity";
   const emailApiUrl = process.env.EMAIL_API_URL || "https://mock.email-api.com/send-draft";  // Verify internal API secret
@@ -187,7 +188,7 @@ export async function POST(request: NextRequest) {
     // Step 1: AI Analysis
     let leadScore: number;
     try {
-      leadScore = await analyzeLead(supabase, openai, job_id, lead.lead_name, lead.company_context);
+      leadScore = await analyzeLead(supabase, openai, model, job_id, lead.lead_name, lead.company_context);
       currentCost += 0.01;
 
       // Update lead with score

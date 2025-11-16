@@ -1,8 +1,49 @@
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 px-6 py-16">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <p className="uppercase tracking-[0.35em] text-slate-400 text-sm">
+          Secure AI Control
+        </p>
+        <h1 className="text-3xl sm:text-4xl font-bold">
+          Governance-first launches. Two-week proof, then scale.
+        </h1>
+        <p className="text-slate-300">
+          We help founders ship sensitive AI/crypto/BI workflows with human-in-loop controls
+          and audit-ready evidence. Start with a 2‑week Audit Pack Sprint, then convert to a retainer.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <a
+            href="/sales-one-pager.html"
+            className="rounded-full bg-white text-slate-900 px-6 py-3 font-semibold shadow-lg shadow-cyan-500/30 hover:bg-slate-200"
+          >
+            View the Offer
+          </a>
+          <a
+            href="/contact.html?source=next-landing&offer=Audit%20Pack%20Sprint"
+            className="rounded-full border border-white/30 px-6 py-3 font-semibold hover:border-white"
+          >
+            Book 15‑min Scope Call
+          </a>
+        </div>
+        <p className="text-slate-400 text-sm">
+          Note: Agents, departments, and internal idea modules remain private and are not included in this app.
+        </p>
+      </div>
+    </main>
+  );
+}
+
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import IdeaStudio from "./components/IdeaStudio";
 
 export default function Home() {
+  // Redirect to landing page - keep idea generator private
+  // Uncomment to make landing page the default:
+  // redirect('/landing');
+  
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(45,212,191,0.18),transparent_55%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.16),transparent_60%)]" />
@@ -45,6 +86,24 @@ export default function Home() {
               className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
             >
               FAQ
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-center text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/60 hover:text-emerald-100 sm:px-4 sm:text-sm"
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-center text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/60 hover:text-emerald-100 sm:px-4 sm:text-sm"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/health-check"
+              className="rounded-full border border-white/20 px-3 py-2 text-center text-white transition hover:border-emerald-300/60 hover:text-emerald-200 sm:px-4"
+            >
+              Health Check
             </Link>
             <a
               href="https://github.com/petermason1/idea-gen"
@@ -183,3 +242,4 @@ export default function Home() {
     </div>
   );
 }
+

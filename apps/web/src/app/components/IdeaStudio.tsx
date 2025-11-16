@@ -12,6 +12,7 @@ import type {
 
 import ValidationBadge from './ValidationBadge';
 import { useValidationData } from '../hooks/useValidationData';
+import { useUsage, UsageTracker, UpgradePrompt } from './UsageTracker';
 
 type GenerateResponse = {
   ideas: Idea[];
@@ -119,6 +120,7 @@ export default function IdeaStudio() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const validationData = useValidationData();
+  const { canGenerate, generate, remaining, isPro } = useUsage();
 
   useEffect(() => {
     setHistory(loadStoredEntries(HISTORY_STORAGE_KEY));
@@ -247,6 +249,18 @@ export default function IdeaStudio() {
   }, []);
 
   const handleGenerate = useCallback(() => {
+    // Check usage before generating
+    if (!canGenerate) {
+      setError('You\'ve reached your free limit. Upgrade to Pro for unlimited ideas!');
+      return;
+    }
+
+    // Track usage (only if not Pro)
+    if (!generate()) {
+      setError('Unable to track usage. Please refresh and try again.');
+      return;
+    }
+
     const payload: GenerateIdeaOptions = { ...filters };
     const isSeeded = Boolean(seedDraft);
     if (isSeeded) {
@@ -265,7 +279,7 @@ export default function IdeaStudio() {
         }
       }
     });
-  }, [fetchIdea, filters, seedDraft]);
+  }, [fetchIdea, filters, seedDraft, canGenerate, generate]);
 
   const handleSave = useCallback(() => {
     if (!currentIdea) {
@@ -529,12 +543,18 @@ export default function IdeaStudio() {
           </p>
         )}
 
+        <div className="mb-4">
+          <UsageTracker />
+        </div>
+
+        <UpgradePrompt />
+
         <div className="flex min-w-0 flex-wrap items-center gap-2 overflow-hidden sm:gap-3 lg:gap-4">
           <button
             type="button"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 shadow-md shadow-emerald-500/30 transition hover:bg-emerald-300 active:translate-y-px sm:gap-2 sm:px-4 sm:py-2 sm:text-sm md:text-base lg:px-5 lg:py-2.5 lg:text-lg xl:px-6 xl:py-3"
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={loading || !canGenerate}
           >
             {loading ? 'Generating…' : 'Generate idea'}
           </button>
